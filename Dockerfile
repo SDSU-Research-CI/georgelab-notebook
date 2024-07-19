@@ -18,31 +18,40 @@ WORKDIR /opt/conda
 
 # Download and install Tissue Forge
 RUN git clone --recurse-submodules https://github.com/tissue-forge/tissue-forge
-RUN source /opt/conda/tissue-forge/package/local/linux/install_vars.sh
-ENV TFSRCDIR=/opt/conda/tissue-forge
+RUN source /opt/conda/tissue-forge/package/local/linux/install_vars.sh \
+ && export TFSRCDIR=/opt/conda/tissue-forge \
+ && export TFENV=/opt/conda/tissue-forge_install/env \
+ && export TFBUILDDIR=/opt/conda/tissue-forge_build \
+ && export TFBUILDQUAL=local \
+ && export TFBUILD_CONFIG=Release \
+ && export TFINSTALLDIR=/opt/conda/tissue-forge_install \
+ && export TF_WITHCUDA="1" \
+ && export CUDAARCHS="80" \
+ && export TFCONDAENV="/opt/conda/bin/conda" \
+ && bash $TFSRCDIR/package/local/linux/install_env.sh \
+ && source activate $TFENV \
+ && bash /opt/conda/tissue-forge/package/local/linux/install_all.sh
+
+# Update base conda env with packages for this image
+COPY environment.yaml environment.yaml
+
+RUN conda env update -n base -f environment.yaml --prune \
+ && rm environment.yaml
+
+ENV RCICACHEBUSTER=1
+
+# Update tissue forge env with packages for jupyter notebook support
+COPY tf-env.yaml tf-env.yaml
+
+RUN conda env update -p /opt/conda/tissue-forge_install/env/ -f tf-env.yaml --prune \
+ && rm tf-env.yaml
+
+# Link tissue forge env so conda can find it
+RUN mkdir /opt/conda/envs \
+ && ln -s /opt/conda/tissue-forge_install/env /opt/conda/envs/tissue-forge
+
+WORKDIR /home/${NB_USER}
+ENV LD_LIBRARY_PATH=/usr/local/cuda-11.7/compat:$LD_LIBRARY_PATH
+ENV TFPYSITEDIR=/opt/conda/tissue-forge_install/lib/python3.8/site-packages/
 ENV TFENV=/opt/conda/tissue-forge_install/env
-ENV TFBUILDDIR=/opt/conda/tissue-forge_build
-ENV TFBUILDQUAL=local
-ENV TFBUILD_CONFIG=Release
-ENV TFINSTALLDIR=/opt/conda/tissue-forge_install
-ENV TF_WITHCUDA="1"
-ENV CUDAARCHS="80;89"
-ENV TFCONDAENV="/opt/conda/bin/conda"
-ENV PATH=/opt/conda/bin:$PATH
-RUN bash $TFSRCDIR/package/local/linux/install_env.sh
-RUN source activate $TFENV
-RUN bash /opt/conda/tissue-forge/package/local/linux/install_all.sh
-
-COPY environment.yml environment.yml
-
-RUN conda env update -n base -f environment.yml --prune \
- && rm environment.yml
-
-# RUN conda install -y -c conda-forge \
-#     opencv \
-#     gudhi \
-#     tabulate \
-#     ripser \
-#     persim
-
-# RUN conda install -y -c conda-forge -c tissue-forge tissue-forge
+ENV PYTHONPATH=$TFPYSITEDIR
