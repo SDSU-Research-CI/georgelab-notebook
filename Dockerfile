@@ -38,8 +38,6 @@ COPY environment.yaml environment.yaml
 RUN conda env update -n base -f environment.yaml --prune \
  && rm environment.yaml
 
-ENV RCICACHEBUSTER=1
-
 # Update tissue forge env with packages for jupyter notebook support
 COPY tf-env.yaml tf-env.yaml
 
