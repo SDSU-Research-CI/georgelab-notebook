@@ -16,6 +16,12 @@ RUN curl https://rclone.org/install.sh | bash
 USER $NB_USER
 WORKDIR /opt/conda
 
+# Update base conda env with packages for this image
+COPY environment-gl.yaml environment-gl.yaml
+
+RUN conda env update -n base -f environment-gl.yaml --prune \
+ && rm environment-gl.yaml
+
 # Download and install Tissue Forge
 RUN git clone --recurse-submodules https://github.com/tissue-forge/tissue-forge
 RUN source /opt/conda/tissue-forge/package/local/linux/install_vars.sh \
@@ -31,12 +37,6 @@ RUN source /opt/conda/tissue-forge/package/local/linux/install_vars.sh \
  && bash $TFSRCDIR/package/local/linux/install_env.sh \
  && source activate $TFENV \
  && bash /opt/conda/tissue-forge/package/local/linux/install_all.sh
-
-# Update base conda env with packages for this image
-COPY environment.yaml environment.yaml
-
-RUN conda env update -n base -f environment.yaml --prune \
- && rm environment.yaml
 
 # Update tissue forge env with packages for jupyter notebook support
 COPY tf-env.yaml tf-env.yaml
