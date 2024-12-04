@@ -28,6 +28,7 @@ WORKDIR /opt/conda
 RUN mamba install -y \
    nb_conda_kernels \
    cuda-version=12.4 \
+   cuda-cudart \
    nvidia/label/cuda-12.4.0::cuda-runtime \
    nvidia/label/cuda-12.4.0::cuda-nvcc \
    tissue-forge::tissue-forge \
@@ -40,9 +41,9 @@ RUN source /opt/conda/tissue-forge/package/local/linux/install_vars.sh \
  && export TFENV=/opt/conda/tissue-forge_install/env \
  && export TFBUILDDIR=/opt/conda/tissue-forge_build \
  && export TFBUILDQUAL=local \
- && export TFBUILD_CONFIG=Release \
+ && export TFBUILD_CONFIG=Debug \
  && export TFINSTALLDIR=/opt/conda/tissue-forge_install \
- && export TF_WITHCUDA="1" \
+ && export TF_WITHCUDA=1 \
  && export CUDAARCHS="80;89" \
  && export TFCONDAENV="/opt/conda/bin/conda" \
  && bash $TFSRCDIR/package/local/linux/install_env.sh \
@@ -74,7 +75,6 @@ RUN mamba install -y -n base \
 
 # Set Tissue Forge env vars
 WORKDIR /home/${NB_USER}
-ENV LD_LIBRARY_PATH=/usr/local/cuda-11.7/compat:$LD_LIBRARY_PATH
 ENV TFPYSITEDIR=/opt/conda/tissue-forge_install/lib/python3.8/site-packages/
 ENV TFENV=/opt/conda/tissue-forge_install/env
 ENV PYTHONPATH=$TFPYSITEDIR
